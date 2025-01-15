@@ -3,6 +3,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import Cookies from "js-cookie"; // Import js-cookie
 
 const page = () => {
   const [data, setData] = useState({
@@ -11,6 +12,7 @@ const page = () => {
   });
 
   const router = useRouter();
+
   const changeHandler = (e) => {
     const { name, value } = e.target;
     setData({ ...data, [name]: value });
@@ -18,19 +20,33 @@ const page = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await axios.post(
-      "https://taskbackend-five.vercel.app/api/v1/login",
-      data
-    );
-    console.log(response.data.data.token);
-    router.push("/");
-    alert("login successfull");
-    setData({
-      email: "",
-      password: "",
-    });
+    try {
+      const response = await axios.post(
+        "https://taskbackend-five.vercel.app/api/v1/login",
+        data
+      );
+      console.log(response.data.data.token);
+
+      if (response.data.success) {
+        Cookies.set("token", response.data.data.token, { expires: 1 });
+        console.log("Token saved in cookies");
+
+        router.push("/");
+        alert("Login successful");
+      } else {
+        alert("Login failed: " + response.data.message);
+      }
+
+      setData({
+        email: "",
+        password: "",
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Login failed. Please check your credentials or try again later.");
+    }
   };
-  console.log(data);
+
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
